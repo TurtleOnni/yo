@@ -371,7 +371,7 @@
           <div class="relation__content">
             <h2 class="relation__title">Присоединяйся к нам <br> прямо сейчас!</h2>
             <p class="relation__sub-title">Заполните форму и ожидайте подробную информацию!</p>
-            <form class="form" action="send_form.php" method="post">
+            <form class="form" id="contactForm" method="post">
               <div class="form__input-container">
                 <input class="form__input" type="text" id="first-name" name="first-name" placeholder="Имя">
                 <input class="form__input" type="text" id="last-name" name="last-name" placeholder="Фамилия">
@@ -410,5 +410,74 @@
     </footer>
   </div>
 </body>
-
+<script>
+  document.getElementById('contactForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const form = e.target;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      
+      // Показываем индикатор загрузки
+      submitBtn.textContent = 'Отправка...';
+      submitBtn.disabled = true;
+      
+      // Собираем данные формы
+      const formData = {
+          first_name: document.getElementById('first-name').value.trim(),
+          last_name: document.getElementById('last-name').value.trim(),
+          phone: document.getElementById('phone').value.trim()
+      };
+      
+      try {
+          // Отправляем данные на серверную функцию
+          const response = await fetch('/api/send-form', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(formData)
+          });
+          
+          const result = await response.json();
+          
+          // Показываем сообщение
+          const messageContainer = document.getElementById('messageContainer');
+          
+          if (response.ok) {
+              messageContainer.innerHTML = `
+                  <div class="alert alert-success">
+                      <i class="bi bi-check-circle-fill me-2"></i>
+                      ${result.message}
+                  </div>
+              `;
+              form.reset(); // Очищаем форму
+          } else {
+              messageContainer.innerHTML = `
+                  <div class="alert alert-error">
+                      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                      ${result.error || 'Ошибка отправки'}
+                  </div>
+              `;
+          }
+          
+          // Прячем сообщение через 5 секунд
+          setTimeout(() => {
+              messageContainer.innerHTML = '';
+          }, 5000);
+          
+      } catch (error) {
+          document.getElementById('messageContainer').innerHTML = `
+              <div class="alert alert-error">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                  Ошибка сети. Проверьте подключение к интернету.
+              </div>
+          `;
+      } finally {
+          // Возвращаем кнопку в исходное состояние
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+      }
+  });
+  </script>
 </html>
